@@ -194,15 +194,15 @@ export default function StorefrontHome() {
               <MapPin size={18} className="text-emerald-700" />
               <span className="text-xs leading-4"><strong className="block text-stone-800">Delivering around</strong>Edappal, Kerala</span>
             </div>
-            <button
-              type="button"
-              onClick={() => setNotice(`Your basket has ${cartCount} item${cartCount === 1 ? "" : "s"}`)}
-              className="relative inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-3.5 py-3 text-sm font-bold text-white transition hover:bg-emerald-800 sm:px-4"
-            >
+            <a href="/wishlist" aria-label={`Wishlist, ${wishlistItems.length} saved items`} className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
+              <Heart size={19} />
+              {wishlistItems.length > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-black text-white">{wishlistItems.length}</span>}
+            </a>
+            <a href="/cart" aria-label={`Open basket with ${cartCount} items`} className="relative inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-3.5 py-3 text-sm font-bold text-white transition hover:bg-emerald-800 sm:px-4">
               <ShoppingBasket size={18} />
               <span className="hidden sm:inline">Basket</span>
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-black text-emerald-800">{cartCount}</span>
-            </button>
+            </a>
           </div>
         </div>
 
