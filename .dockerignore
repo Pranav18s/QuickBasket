@@ -1,0 +1,15 @@
+# Docker ignore for the API image
+node_modules/
+.next/
+.env
+.env.local
+.git/
+*.log
+npm-debug.log*
+coverage/
+test-results/
+playwright-report/
+.docker-data/
+mongo-data/
+docs/
+.github/

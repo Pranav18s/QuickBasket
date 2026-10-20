@@ -1,0 +1,83 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml
+# QuickBasket 2026 — Local development stack
+#
+# Services:
+#   mongo  — MongoDB 7 on port 27017 (with a named volume for persistence)
+#   api    — Express backend on port 5000 (hot-reload via nodemon)
+#   web    — Next.js frontend on port 3000 (hot-reload)
+#
+# Usage:
+#   1. Copy .env.example to .env and fill in values.
+#   2. docker-compose up --build
+#
+# NOTE: This file is for LOCAL DEVELOPMENT only.
+# Production deployment is planned for Phase 12.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  # ── MongoDB ─────────────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: qb_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      # Named volume — data persists between docker-compose up/down.
+      - mongo_data:/data/db
+    # No root credentials here — this is a local dev DB with no exposed auth.
+    # In production, use MONGO_INITDB_ROOT_USERNAME / PASSWORD.
+
+  # ── Express API ─────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: deps   # Use the deps stage so nodemon is available
+    container_name: qb_api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount source code for hot-reload (nodemon watches for changes).
+      - ./apps/api/src:/app/apps/api/src
+      - ./packages/shared/src:/app/packages/shared/src
+    environment:
+      NODE_ENV: development
+      API_PORT: 5000
+      MONGODB_URI: mongodb://mongo:27017/quickbasket
+      JWT_SECRET: ${JWT_SECRET:-local_dev_secret_change_me}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGIN: http://localhost:3000
+    command: ["node", "node_modules/.bin/nodemon", "--watch", "apps/api/src", "--ext", "js", "apps/api/src/server.js"]
+    depends_on:
+      - mongo
+
+  # ── Next.js frontend ────────────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: deps   # Use deps stage so `next dev` is available
+    container_name: qb_web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source for hot-reload.
+      - ./apps/web/app:/app/apps/web/app
+      - ./apps/web/components:/app/apps/web/components
+      - ./apps/web/store:/app/apps/web/store
+      - ./apps/web/public:/app/apps/web/public
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://api:5000
+    command: ["npm", "run", "dev", "--workspace=apps/web"]
+    depends_on:
+      - api
+
+# ── Volumes ──────────────────────────────────────────────────────────────────
+volumes:
+  mongo_data:
+    driver: local
