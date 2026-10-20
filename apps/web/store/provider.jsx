@@ -24,8 +24,12 @@ import { useRef, useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { makeStore } from './index';
 import { addItem } from './cartSlice';
+import { toggleWishlist } from './wishlistSlice';
+import { setUser } from './authSlice';
 
 const CART_STORAGE_KEY = 'qb_cart_items';
+const WISHLIST_STORAGE_KEY = 'qb_wishlist_items';
+const USER_STORAGE_KEY = 'qb_demo_user';
 
 export default function StoreProvider({ children }) {
   // useRef ensures the store is only created once per browser session,
@@ -35,31 +39,63 @@ export default function StoreProvider({ children }) {
     storeRef.current = makeStore();
   }
 
-  // Load persisted cart from localStorage after mount (client-only).
+  // Load persisted cart, wishlist, and demo user from localStorage after mount (client-only).
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(CART_STORAGE_KEY);
-      if (saved) {
-        const items = JSON.parse(saved);
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+      if (savedCart) {
+        const items = JSON.parse(savedCart);
         if (Array.isArray(items) && items.length > 0) {
           items.forEach((item) => {
             storeRef.current.dispatch(addItem(item));
           });
         }
       }
+
+      const savedWishlist = localStorage.getItem(WISHLIST_STORAGE_KEY);
+      if (savedWishlist) {
+        const wishItems = JSON.parse(savedWishlist);
+        if (Array.isArray(wishItems) && wishItems.length > 0) {
+          wishItems.forEach((w) => {
+            storeRef.current.dispatch(toggleWishlist(w));
+          });
+        }
+      }
+
+      const savedUser = localStorage.getItem(USER_STORAGE_KEY);
+      if (savedUser) {
+        storeRef.current.dispatch(setUser(JSON.parse(savedUser)));
+      } else {
+        // Default demo customer logged in for smooth portfolio testing
+        const defaultDemoUser = {
+          id: 'user_1',
+          name: 'Arjun Nair',
+          email: 'customer@quickbasket.demo',
+          role: 'customer',
+        };
+        storeRef.current.dispatch(setUser(defaultDemoUser));
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(defaultDemoUser));
+      }
     } catch {
       // Corrupted localStorage data — silently ignore and start fresh.
       localStorage.removeItem(CART_STORAGE_KEY);
+      localStorage.removeItem(WISHLIST_STORAGE_KEY);
     }
   }, []); // Empty dep array = runs once after first render
 
-  // Subscribe to store changes and persist cart to localStorage.
+  // Subscribe to store changes and persist cart & wishlist to localStorage.
   useEffect(() => {
     const store = storeRef.current;
     const unsubscribe = store.subscribe(() => {
       try {
-        const { cart } = store.getState();
+        const { cart, wishlist, auth } = store.getState();
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart.items));
+        localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlist.items));
+        if (auth.user) {
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(auth.user));
+        } else {
+          localStorage.removeItem(USER_STORAGE_KEY);
+        }
       } catch {
         // localStorage may be full or disabled — fail silently.
       }
