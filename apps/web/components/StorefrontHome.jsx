@@ -199,6 +199,7 @@ export default function StorefrontHome() {
               <MapPin size={18} className="text-emerald-700" />
               <span className="text-xs leading-4"><strong className="block text-stone-800">Delivering around</strong>Edappal, Kerala</span>
             </div>
+            <Link href="/assistant" aria-label="Open AI grocery assistant" className="hidden rounded-xl border border-emerald-200 px-3 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50 lg:inline-flex">AI Assistant</Link>
             <a href="/wishlist" aria-label={`Wishlist, ${wishlistItems.length} saved items`} className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
               <Heart size={19} />
               {wishlistItems.length > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-black text-white">{wishlistItems.length}</span>}
