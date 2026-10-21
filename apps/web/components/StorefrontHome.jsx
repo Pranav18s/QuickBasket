@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   Check,
@@ -112,13 +112,40 @@ export default function StorefrontHome() {
   const dispatch = useDispatch();
   const cartCount = useSelector(selectCartItemCount);
   const wishlistItems = useSelector(selectWishlistItems);
+  const [catalogue, setCatalogue] = useState(DEMO_PRODUCTS);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [sortBy, setSortBy] = useState("featured");
   const [notice, setNotice] = useState("");
 
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/v1/products?limit=50")
+      .then(async (response) => {
+        if (!response.ok) return null;
+        const payload = await response.json();
+        const products = payload?.data?.products;
+        return Array.isArray(products) && products.length > 0
+          ? products.map((product) => ({
+              ...product,
+              id: product._id || product.id,
+              rating: product.rating ?? "New",
+              reviewsCount: product.reviewsCount ?? 0,
+              badge: product.badge ?? null,
+            }))
+          : null;
+      })
+      .then((products) => {
+        if (!cancelled && products) setCatalogue(products);
+      })
+      .catch(() => {
+        // Keep the bundled catalogue available if the API/database is offline.
+      });
+    return () => { cancelled = true; };
+  }, []);
+
   const activeProducts = useMemo(() => {
-    let list = DEMO_PRODUCTS.filter((product) => product.active && product.stock > 0);
+    let list = catalogue.filter((product) => product.active && product.stock > 0);
     if (category !== "all") {
       list = list.filter((product) => product.categorySlug === category);
     }
@@ -135,7 +162,7 @@ export default function StorefrontHome() {
     if (sortBy === "rating") list = [...list].sort((a, b) => b.rating - a.rating);
     if (sortBy === "featured") list = [...list].sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)));
     return list;
-  }, [category, query, sortBy]);
+  }, [catalogue, category, query, sortBy]);
 
   const isWishlisted = (product) =>
     wishlistItems.some((item) => item.id === product.id || item.productId === product.id || item.slug === product.slug);
