@@ -6,7 +6,10 @@ async function loadProduct(slug) {
   const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
   try {
     const response = await fetch(`${apiBase}/api/v1/products/${encodeURIComponent(slug)}`, { cache: "no-store" });
-    if (response.status === 404) return { product: null, source: "api" };
+    if (response.status === 404) {
+      const demo = DEMO_PRODUCTS.find((item) => item.slug === slug && item.active);
+      return { product: demo || null, source: demo ? "demo" : "api" };
+    }
     if (response.ok) {
       const payload = await response.json();
       const item = payload?.data?.product;
