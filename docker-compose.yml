@@ -42,6 +42,7 @@ services:
     volumes:
       # Mount source code for hot-reload (nodemon watches for changes).
       - ./apps/api/src:/app/apps/api/src
+      - ./apps/api/scripts:/app/apps/api/scripts
       - ./packages/shared/src:/app/packages/shared/src
     environment:
       NODE_ENV: development
