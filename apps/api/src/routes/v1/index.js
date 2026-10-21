@@ -11,6 +11,8 @@ const asyncHandler = require('../../utils/asyncHandler');
 const router = express.Router();
 const aiRouter = require('./ai');
 const productsRouter = require('./products');
+const authRouter = require('./auth');
+const ordersRouter = require('./orders');
 
 // ── Health ─────────────────────────────────────────────────────────────────────
 /**
@@ -40,6 +42,8 @@ router.get(
 
 router.use('/ai', aiRouter);
 router.use('/products', productsRouter);
+router.use('/auth', authRouter);
+router.use('/orders', ordersRouter);
 
 // ── Future routers ─────────────────────────────────────────────────────────────
 // Phase 6: const productsRouter = require('./products');
