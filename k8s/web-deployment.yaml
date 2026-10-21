@@ -23,6 +23,8 @@ spec:
           env:
             - name: NODE_ENV
               value: production
+            - name: NEXT_PUBLIC_API_URL
+              value: "http://quickbasket-api:5000"
           readinessProbe:
             httpGet:
               path: /
