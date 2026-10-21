@@ -19,6 +19,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { DEMO_CATEGORIES, DEMO_PRODUCTS } from "../lib/demoData";
 import { addItem, selectCartItemCount } from "../store/cartSlice";
+import { clearUser, selectCurrentUser } from "../store/authSlice";
 import { selectWishlistItems, toggleWishlist } from "../store/wishlistSlice";
 
 const money = (paise) =>
@@ -112,6 +113,7 @@ export default function StorefrontHome() {
   const dispatch = useDispatch();
   const cartCount = useSelector(selectCartItemCount);
   const wishlistItems = useSelector(selectWishlistItems);
+  const currentUser = useSelector(selectCurrentUser);
   const [catalogue, setCatalogue] = useState(DEMO_PRODUCTS);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
@@ -226,7 +228,12 @@ export default function StorefrontHome() {
               <MapPin size={18} className="text-emerald-700" />
               <span className="text-xs leading-4"><strong className="block text-stone-800">Delivering around</strong>Edappal, Kerala</span>
             </div>
-            <Link href="/login" className="hidden rounded-xl border border-stone-200 px-3 py-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 lg:inline-flex">Sign in</Link>
+            {currentUser?.role === "admin" && <Link href="/admin" className="hidden rounded-xl border border-emerald-200 px-3 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50 xl:inline-flex">Admin</Link>}
+            {currentUser ? (
+              <button type="button" onClick={async () => {
+                try { await fetch("/api/v1/auth/logout", { method: "POST", credentials: "same-origin" }); } finally { dispatch(clearUser()); setNotice("You have been signed out"); window.setTimeout(() => setNotice(""), 2400); }
+              }} className="hidden rounded-xl border border-stone-200 px-3 py-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 lg:inline-flex">Sign out</button>
+            ) : <Link href="/login" className="hidden rounded-xl border border-stone-200 px-3 py-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 lg:inline-flex">Sign in</Link>}
             <Link href="/assistant" aria-label="Open AI grocery assistant" className="hidden rounded-xl border border-emerald-200 px-3 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50 lg:inline-flex">AI Assistant</Link>
             <a href="/wishlist" aria-label={`Wishlist, ${wishlistItems.length} saved items`} className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
               <Heart size={19} />
