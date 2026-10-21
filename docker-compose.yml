@@ -50,6 +50,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:-local_dev_secret_change_me}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       CORS_ORIGIN: http://localhost:3000
+      AI_PROVIDER_API_KEY: ${AI_PROVIDER_API_KEY:-}
+      AI_PROVIDER_BASE_URL: ${AI_PROVIDER_BASE_URL:-https://api.openai.com/v1}
+      AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
     command: ["node", "node_modules/.bin/nodemon", "--watch", "apps/api/src", "--ext", "js", "apps/api/src/server.js"]
     depends_on:
       - mongo
