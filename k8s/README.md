@@ -53,8 +53,37 @@ Invoke-RestMethod http://localhost:5000/api/v1/health
 
 ## Important notes
 
-- The API currently exposes health and AI chat endpoints; MongoDB product/order persistence is still a future implementation.
+- The API includes health, MongoDB product catalogue, customer auth, demo orders, admin stock/order management and AI chat endpoints; test all routes locally before treating them as production-ready.
 - The current storefront catalogue, cart and wishlist still use demo data/browser storage.
 - The Next.js rewrite target is configured through `NEXT_PUBLIC_API_URL`; this manifest points it at the in-cluster API service. If you change that value, rebuild the web image and test the rewrite.
 - Use managed MongoDB with authentication, TLS, private networking, backups and monitoring for public production hosting.
 - Do not expose MongoDB publicly. Do not put API keys in ConfigMaps, image layers, or Git.
+
+## Seed the demo catalogue
+
+Keep the MongoDB port-forward running in one terminal:
+
+```powershell
+kubectl -n quickbasket port-forward service/mongo 27017:27017
+```
+
+In a second terminal at the repository root:
+
+```powershell
+$env:MONGODB_URI = "mongodb://localhost:27017/quickbasket"
+npm run seed --workspace=apps/api
+```
+
+## Bootstrap an admin account
+
+Set local environment variables (do not commit them) and run the script against the database:
+
+```powershell
+$env:MONGODB_URI = "mongodb://localhost:27017/quickbasket"
+$env:ADMIN_NAME = "Store Admin"
+$env:ADMIN_EMAIL = "your-admin-email@example.com"
+$env:ADMIN_PASSWORD = "choose-a-unique-password-at-least-12-characters"
+npm run seed:admin --workspace=apps/api
+```
+
+Then sign in at `/login` and open `/admin`. Do not use the example password literally. The script never prints the password.
