@@ -13,6 +13,7 @@ const aiRouter = require('./ai');
 const productsRouter = require('./products');
 const authRouter = require('./auth');
 const ordersRouter = require('./orders');
+const adminRouter = require('./admin');
 
 // ── Health ─────────────────────────────────────────────────────────────────────
 /**
@@ -44,6 +45,7 @@ router.use('/ai', aiRouter);
 router.use('/products', productsRouter);
 router.use('/auth', authRouter);
 router.use('/orders', ordersRouter);
+router.use('/admin', adminRouter);
 
 // ── Future routers ─────────────────────────────────────────────────────────────
 // Phase 6: const productsRouter = require('./products');
