@@ -1,7 +1,7 @@
-require('../config/env');
+require('../src/config/env');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { connectDB } = require('../config/db');
+const { connectDB } = require('../src/config/db');
 const User = require('../src/models/User');
 
 async function main() {
