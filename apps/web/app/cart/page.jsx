@@ -72,8 +72,8 @@ export default function CartPage() {
                   <div className="flex justify-between text-base font-extrabold"><span>Subtotal</span><span>{money(subtotal)}</span></div>
                 </div>
               </div>
-              <button type="button" disabled className="mt-6 w-full cursor-not-allowed rounded-xl bg-stone-200 px-4 py-3.5 text-sm font-bold text-stone-500">Checkout coming later</button>
-              <p className="mt-3 text-center text-xs leading-5 text-stone-400">Portfolio demo only. No real order or payment will be placed.</p>
+              <Link href="/checkout" className="mt-6 block w-full rounded-xl bg-emerald-700 px-4 py-3.5 text-center text-sm font-bold text-white transition hover:bg-emerald-800">Continue to checkout</Link>
+              <p className="mt-3 text-center text-xs leading-5 text-stone-400">Portfolio demo only. Checkout creates a demo order when the API and database are configured; no real payment is collected.</p>
               <Link href="/#shop" className="mt-4 block text-center text-sm font-bold text-emerald-800 hover:text-emerald-950">+ Add more groceries</Link>
             </aside>
           </div>
