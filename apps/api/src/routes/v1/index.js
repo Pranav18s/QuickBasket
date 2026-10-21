@@ -9,6 +9,7 @@ const express = require('express');
 const asyncHandler = require('../../utils/asyncHandler');
 
 const router = express.Router();
+const aiRouter = require('./ai');
 
 // ── Health ─────────────────────────────────────────────────────────────────────
 /**
@@ -35,6 +36,8 @@ router.get(
     });
   })
 );
+
+router.use('/ai', aiRouter);
 
 // ── Future routers ─────────────────────────────────────────────────────────────
 // Phase 6: const productsRouter = require('./products');
