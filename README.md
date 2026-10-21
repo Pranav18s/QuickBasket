@@ -1,216 +1,136 @@
 # QuickBasket 2026
 
-> **Portfolio demo — not a real grocery service.**
-> No real orders, payments, deliveries, or personal data are processed.
+> **Portfolio project / demo.** The storefront catalogue is sample data. This repository is under active development; do not use it to process real customer data, payments, or deliveries.
 
-QuickBasket 2026 is a full-stack grocery-ordering web application built as a developer portfolio project, targeting the Edappal and Vattamkulam areas of Kerala, India. It demonstrates a complete modern web stack from database to UI.
+QuickBasket is a grocery storefront concept for Edappal and Vattamkulam, Kerala. It is being built as a full-stack portfolio project with AI integration and a cloud/DevOps delivery pipeline.
 
----
+## Stack
 
-## Tech stack
+- **Frontend:** Next.js App Router, React, JavaScript/JSX, Tailwind CSS
+- **State:** Redux Toolkit + React Redux
+- **Backend:** Node.js + Express REST API
+- **Database:** MongoDB + Mongoose dependencies and connection helper (database-backed product/order flows still need implementation and verification)
+- **AI:** server-side OpenAI-compatible Chat Completions integration, configured by environment variables
+- **DevOps:** Dockerfiles, Docker Compose, Kubernetes learning manifests, GitHub Actions CI
+- **Repository:** npm workspaces monorepo
 
-| Layer | Technology |
+## Current feature status
+
+| Feature | Current status |
 |---|---|
-| Frontend | Next.js 15 (App Router) |
-| Language | JavaScript + JSX (no TypeScript) |
-| State management | Redux Toolkit + React Redux |
-| Styling | Tailwind CSS |
-| Backend | Node.js + Express |
-| Database | MongoDB + Mongoose |
-| Package management | npm workspaces (monorepo) |
-| Containers | Docker + Docker Compose |
-| CI | GitHub Actions |
-| Testing | Playwright (E2E, planned Phase 9) |
+| Storefront catalogue, search, categories, sorting | Demo frontend implemented |
+| Cart and wishlist | Redux + browser localStorage |
+| Product details route | Implemented; verify locally |
+| Express API | Health endpoint and AI chat endpoint |
+| AI assistant UI | Implemented; requires a configured provider API key |
+| MongoDB persistence | Connection helper exists; production product/order flows are not yet complete |
+| Real authentication | Not complete; current UI demo identity is not secure authentication |
+| Order checkout and history | Not complete |
+| Payment gateway | Not integrated |
+| Admin/store dashboard | Not complete |
+| Docker / Compose | Configured; must be built and tested locally/CI |
+| Kubernetes | Starter manifests for local learning; not production-ready |
+| GitHub Actions | Lint/test/build/Docker-image workflow; verify run status |
+| Public deployment | Not deployed yet |
 
----
+## Repository structure
 
-## Project status
+```
+apps/web/                 Next.js storefront and pages
+apps/web/app/             App Router pages (/, /cart, /wishlist, /products/[slug], /assistant)
+apps/web/components/      Reusable UI
+apps/web/store/           Redux store, cart, wishlist and demo auth state
+apps/web/lib/              Demo product data and client-side data service
+apps/api/src/              Express app, middleware, API routes and config
+packages/shared/           Reusable JavaScript helpers and validation
+docs/                      Project requirements, architecture and decisions
+k8s/                       Local Kubernetes learning manifests
+.github/workflows/ci.yml   CI checks
+docker-compose.yml         Local development stack
+```
 
-| Phase | Name | Status |
-|---|---|---|
-| 1 | Requirements & Architecture | ✅ Complete |
-| 2 | Repository & Scaffold | ✅ Complete |
-| 3 | UI Design (Google Stitch) | ⬜ Not started |
-| 4 | Frontend Implementation | ⬜ Not started |
-| 5 | Redux Store & Cart | 🔄 Partial (slice created) |
-| 6 | Express API & MongoDB | ⬜ Not started |
-| 7 | Authentication & Authorisation | ⬜ Not started |
-| 8 | Checkout, Orders & Admin Tools | ⬜ Not started |
-| 9 | Automated Tests | ⬜ Not started |
-| 10 | Docker (local dev) | 🔄 Partial (config ready) |
-| 11 | GitHub Actions CI | ✅ Workflow created |
-| 12 | Deployment & Portfolio Docs | ⬜ Not started |
+## Local development
 
----
+Requirements: Node.js 20+, npm 10+, Git. Docker Desktop is needed for Compose/Kubernetes steps.
 
-## Prerequisites
+1. Clone the repository and switch to the feature branch:
 
-| Tool | Minimum version |
-|---|---|
-| Node.js | 20 LTS |
-| npm | 10 |
-| Docker | 24 |
-| Docker Compose | v2 |
-| Git | 2.x |
+   ```bash
+   git clone https://github.com/Pranav18s/QuickBasket.git
+   cd QuickBasket
+   git switch feature/storefront-ui
+   ```
 
----
+2. Install dependencies and configure environment variables:
 
-## Getting started
+   ```bash
+   npm ci
+   cp .env.example .env
+   ```
 
-### 1. Clone the repository
+   On Windows PowerShell, use `Copy-Item .env.example .env`. Generate a local JWT secret with:
+
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+   ```
+
+3. Start the frontend alone:
+
+   ```bash
+   npm run dev:web
+   ```
+
+   Open http://localhost:3000. To start the Express API in another terminal, run `npm run dev:api`; its health endpoint is http://localhost:5000/api/v1/health.
+
+4. To run the local Docker Compose stack:
+
+   ```bash
+   docker compose up --build
+   ```
+
+   Frontend: http://localhost:3000  
+   API health: http://localhost:5000/api/v1/health
+
+   Stop with `docker compose down`. The MongoDB volume is retained unless explicitly removed.
+
+## AI assistant setup
+
+The AI route is server-side at `POST /api/v1/ai/chat`; the UI is at `/assistant`. It sends requests to an OpenAI-compatible Chat Completions endpoint. Set these in your ignored root `.env` file:
+
+```dotenv
+AI_PROVIDER_API_KEY=your_provider_key
+AI_PROVIDER_BASE_URL=https://api.openai.com/v1
+AI_MODEL=gpt-4o-mini
+```
+
+For Docker Compose, Compose passes these values to the API container. Never put provider keys in `NEXT_PUBLIC_*` variables, frontend source, or Git. Provider usage may cost money. Without a key, the UI should show a clear configuration error.
+
+## CI checks
+
+GitHub Actions is configured to run linting, available unit tests, a Next.js production build, and Docker image builds on feature-branch pushes and pull requests into `main` / `develop`. Check the Actions tab for the actual run results; a workflow file existing in Git is not proof that a run passed.
+
+Run the same main checks locally from the repository root:
 
 ```bash
-git clone https://github.com/<your-username>/QuickBasket-2026.git
-cd QuickBasket-2026
+npm ci
+npm run lint
+npm test
+npm run build
+docker build -f apps/api/Dockerfile -t quickbasket-api:local .
+docker build -f apps/web/Dockerfile -t quickbasket-web:local --build-arg NEXT_PUBLIC_API_URL=http://localhost:5000 .
 ```
 
-### 2. Set up environment variables
+## Kubernetes (local learning)
 
-```bash
-cp .env.example .env
-```
+Starter manifests are in `k8s/`. Read [k8s/README.md](k8s/README.md) before applying them. They are intended for Minikube/local learning, not a public production cluster. For a public deployment, use managed MongoDB with authentication/TLS/backups, TLS ingress, a private database network, external image registry, secure secret management and observability.
 
-Open `.env` and set:
-- `JWT_SECRET` — a long random string (run `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`)
+## Release workflow
 
-All other defaults are fine for local development.
+All development work should be committed to `feature/storefront-ui`, tested, pushed, then reviewed in a pull request before merging to `main`. Do not merge until CI passes and the critical flows have been tested in a browser.
 
-### 3. Install dependencies
+## Important limitations
 
-```bash
-npm install
-```
-
-This installs dependencies for all three workspaces in one command.
-
----
-
-## Running locally (without Docker)
-
-You need a MongoDB instance running locally on port `27017`.
-The quickest way is to start just MongoDB via Docker:
-
-```bash
-docker-compose up mongo -d
-```
-
-Then in two separate terminals:
-
-```bash
-# Terminal 1 — Express API (port 5000)
-npm run dev:api
-
-# Terminal 2 — Next.js frontend (port 3000)
-npm run dev:web
-```
-
-Or run both together:
-
-```bash
-npm run dev
-```
-
-Open **http://localhost:3000** in your browser.
-
----
-
-## Running locally (with Docker Compose)
-
-This starts all three services (MongoDB, API, Next.js) in containers:
-
-```bash
-docker-compose up --build
-```
-
-| Service | URL |
-|---|---|
-| Next.js frontend | http://localhost:3000 |
-| Express API | http://localhost:5000 |
-| API health check | http://localhost:5000/api/v1/health |
-| MongoDB | mongodb://localhost:27017 |
-
-Stop with `docker-compose down`. Data persists in a named Docker volume (`mongo_data`).
-
----
-
-## Available scripts
-
-Run from the repo root unless noted.
-
-| Script | Description |
-|---|---|
-| `npm run dev` | Start both apps concurrently (requires MongoDB) |
-| `npm run dev:web` | Next.js dev server only |
-| `npm run dev:api` | Express dev server only (nodemon) |
-| `npm run build` | Build the Next.js app for production |
-| `npm run lint` | Lint all workspaces |
-| `npm run test` | Run all configured tests |
-| `npm run format` | Format all files with Prettier |
-
----
-
-## Monorepo layout
-
-```
-QuickBasket-2026/
-├── apps/
-│   ├── web/         # Next.js App Router frontend
-│   └── api/         # Express REST API
-├── packages/
-│   └── shared/      # Pure JS utilities (paise, slug) shared by both apps
-├── docs/            # Full project documentation
-├── .github/
-│   └── workflows/ci.yml
-├── docker-compose.yml
-├── .env.example
-└── package.json     # Root workspace config
-```
-
----
-
-## API quick reference
-
-Base URL: `http://localhost:5000/api/v1`
-
-| Method | Path | Description |
-|---|---|---|
-| GET | `/health` | API health check |
-
-More endpoints will be added in Phase 6 (Express API & MongoDB).
-See [`docs/API.md`](docs/API.md) for the full design.
-
----
-
-## Documentation
-
-| File | Description |
-|---|---|
-| [`docs/MASTER_PROJECT_PROMPT.md`](docs/MASTER_PROJECT_PROMPT.md) | Full project specification |
-| [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) | Functional & non-functional requirements |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System design and component layout |
-| [`docs/API.md`](docs/API.md) | REST API reference |
-| [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md) | 13-phase build plan |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Architecture Decision Records |
-
----
-
-## Limitations and honest notes
-
-- **This is a portfolio demo.** No real products, real orders, or real deliveries exist.
-- The database is not yet connected (Phase 6). The API currently responds to `/health` only.
-- Cart state is stored in `localStorage` — clearing the browser clears the cart.
-- Authentication is not yet implemented (Phase 7).
-- No payment gateway is integrated — this is by design (COD demo only).
-- Not deployed to any cloud service.
-
----
-
-## Contributing
-
-This project is a personal portfolio piece and is not accepting external contributions at this time.
-
----
-
-## Licence
-
-MIT © 2026
+- Sample products/prices/stock are not live shop inventory.
+- Cart and wishlist are browser-local; they are not linked to a real account.
+- The AI assistant does not place orders or confirm stock.
+- Real authentication, persistent orders, admin inventory management, checkout, payment-provider integration, production security review and public hosting are still pending.
