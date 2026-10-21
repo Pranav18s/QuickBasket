@@ -21,13 +21,13 @@ QuickBasket is a grocery storefront concept for Edappal and Vattamkulam, Kerala.
 | Storefront catalogue, search, categories, sorting | Demo frontend implemented |
 | Cart and wishlist | Redux + browser localStorage |
 | Product details route | Implemented; verify locally |
-| Express API | Health endpoint and AI chat endpoint |
+| Express API | Health, products, auth, orders, admin and AI endpoints |
 | AI assistant UI | Implemented; requires a configured provider API key |
 | MongoDB persistence | Connection helper exists; production product/order flows are not yet complete |
-| Real authentication | Not complete; current UI demo identity is not secure authentication |
-| Order checkout and history | Not complete |
+| Authentication | Register/login/logout/session API and customer forms added; security and browser integration need verification |
+| Orders | COD demo checkout, stock validation and customer order API added; test end-to-end before claiming complete |
 | Payment gateway | Not integrated |
-| Admin/store dashboard | Not complete |
+| Admin/store dashboard | Protected stock/order status dashboard added; admin account must be bootstrapped |
 | Docker / Compose | Configured; must be built and tested locally/CI |
 | Kubernetes | Starter manifests for local learning; not production-ready |
 | GitHub Actions | Lint/test/build/Docker-image workflow; verify run status |
@@ -80,7 +80,7 @@ Requirements: Node.js 20+, npm 10+, Git. Docker Desktop is needed for Compose/Ku
    npm run dev:web
    ```
 
-   Open http://localhost:3000. To start the Express API in another terminal, run `npm run dev:api`; its health endpoint is http://localhost:5000/api/v1/health.
+   Open http://localhost:3000. To start the Express API in another terminal, run `npm run dev:api`; MongoDB must be reachable. Its health endpoint is http://localhost:5000/api/v1/health. To seed demo products, run `npm run seed --workspace=apps/api` after MongoDB is available.
 
 4. To run the local Docker Compose stack:
 
@@ -95,7 +95,7 @@ Requirements: Node.js 20+, npm 10+, Git. Docker Desktop is needed for Compose/Ku
 
 ## AI assistant setup
 
-The AI route is server-side at `POST /api/v1/ai/chat`; the UI is at `/assistant`. It sends requests to an OpenAI-compatible Chat Completions endpoint. Set these in your ignored root `.env` file:
+The AI route is server-side at `POST /api/v1/ai/chat`; the UI is at `/assistant`. Customer authentication routes are `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me`, and `/api/v1/auth/logout`. Products are under `/api/v1/products`; authenticated customer orders are under `/api/v1/orders`; admin operations are under `/api/v1/admin`. It sends requests to an OpenAI-compatible Chat Completions endpoint. Set these in your ignored root `.env` file:
 
 ```dotenv
 AI_PROVIDER_API_KEY=your_provider_key
@@ -133,4 +133,4 @@ All development work should be committed to `feature/storefront-ui`, tested, pus
 - Sample products/prices/stock are not live shop inventory.
 - Cart and wishlist are browser-local; they are not linked to a real account.
 - The AI assistant does not place orders or confirm stock.
-- Real authentication, persistent orders, admin inventory management, checkout, payment-provider integration, production security review and public hosting are still pending.
+- Public hosting, real payment-provider integration, production security review, transactional inventory handling, email verification/password reset, admin audit logs, full frontend/backend integration testing and deployment are still pending.
