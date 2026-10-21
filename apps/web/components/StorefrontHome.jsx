@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   ArrowRight,
@@ -38,12 +39,14 @@ function ProductCard({ product, onAdd, inWishlist, onWishlist }) {
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-white transition duration-200 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-950/5">
       <div className="relative aspect-[4/3] overflow-hidden bg-stone-100">
-        <img
-          src={product.image}
-          alt={product.name}
-          loading="lazy"
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-        />
+        <Link href={`/products/${product.slug}`} aria-label={`View ${product.name} details`} className="block h-full w-full">
+          <img
+            src={product.image}
+            alt={product.name}
+            loading="lazy"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          />
+        </Link>
         {discount > 0 && (
           <span className="absolute left-3 top-3 rounded-full bg-emerald-700 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
             {discount}% OFF
@@ -70,7 +73,9 @@ function ProductCard({ product, onAdd, inWishlist, onWishlist }) {
           {product.category} <span className="px-1 text-stone-300">/</span> {product.packageSize}
         </p>
         <h3 className="min-h-[2.8rem] text-sm font-semibold leading-5 text-stone-800">
-          {product.name}
+          <Link href={`/products/${product.slug}`} className="transition hover:text-emerald-800">
+            {product.name}
+          </Link>
         </h3>
         <div className="mt-2 flex items-center gap-1 text-xs text-amber-600">
           <Star size={13} fill="currentColor" />
