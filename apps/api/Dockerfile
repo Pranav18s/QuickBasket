@@ -7,6 +7,9 @@ COPY package-lock.json ./
 COPY packages/shared/package.json ./packages/shared/package.json
 COPY apps/api/package.json ./apps/api/package.json
 COPY apps/web/package.json ./apps/web/package.json
+RUN npm ci
+
+FROM deps AS prod-deps
 RUN npm ci --omit=dev
 
 FROM node:22-alpine AS runner
@@ -16,7 +19,7 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 expressjsuser
 
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=prod-deps /app/node_modules ./node_modules
 COPY package.json ./package.json
 COPY packages/shared/package.json ./packages/shared/package.json
 COPY packages/shared/src ./packages/shared/src
