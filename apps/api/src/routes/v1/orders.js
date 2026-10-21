@@ -28,7 +28,9 @@ router.post(
   '/',
   [
     body('items').isArray({ min: 1, max: 30 }),
-    body('items.*.productId').isMongoId(),
+    body('items.*.productId').optional().isMongoId(),
+    body('items.*.slug').optional().isString().trim().isLength({ min: 1, max: 160 }),
+    body('items.*').custom((item) => Boolean(item?.productId || item?.slug)),
     body('items.*.quantity').isInt({ min: 1, max: 99 }),
     ...addressRules,
     body('paymentMethod').optional().isIn(['cod']),
@@ -41,8 +43,11 @@ router.post(
 
     try {
       for (const requested of items) {
+        const identity = requested.productId && mongoose.Types.ObjectId.isValid(requested.productId)
+          ? { _id: new mongoose.Types.ObjectId(requested.productId) }
+          : { slug: requested.slug };
         const product = await Product.findOneAndUpdate(
-          { _id: new mongoose.Types.ObjectId(requested.productId), active: true, stock: { $gte: Number(requested.quantity) } },
+          { ...identity, active: true, stock: { $gte: Number(requested.quantity) } },
           { $inc: { stock: -Number(requested.quantity) } },
           { new: true }
         );
