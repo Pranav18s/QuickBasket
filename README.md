@@ -9,7 +9,7 @@ QuickBasket is a grocery storefront concept for Edappal and Vattamkulam, Kerala.
 - **Frontend:** Next.js App Router, React, JavaScript/JSX, Tailwind CSS
 - **State:** Redux Toolkit + React Redux
 - **Backend:** Node.js + Express REST API
-- **Database:** MongoDB + Mongoose dependencies and connection helper (database-backed product/order flows still need implementation and verification)
+- **Database:** MongoDB + Mongoose models for products, users and orders (verify persistence and concurrency locally)
 - **AI:** server-side OpenAI-compatible Chat Completions integration, configured by environment variables
 - **DevOps:** Dockerfiles, Docker Compose, Kubernetes learning manifests, GitHub Actions CI
 - **Repository:** npm workspaces monorepo
@@ -23,7 +23,7 @@ QuickBasket is a grocery storefront concept for Edappal and Vattamkulam, Kerala.
 | Product details route | Implemented; verify locally |
 | Express API | Health, products, auth, orders, admin and AI endpoints |
 | AI assistant UI | Implemented; requires a configured provider API key |
-| MongoDB persistence | Connection helper exists; production product/order flows are not yet complete |
+| MongoDB persistence | Product, user and order models/routes added; local integration needs verification |
 | Authentication | Register/login/logout/session API and customer forms added; security and browser integration need verification |
 | Orders | COD demo checkout, stock validation and customer order API added; test end-to-end before claiming complete |
 | Payment gateway | Not integrated |
@@ -37,9 +37,9 @@ QuickBasket is a grocery storefront concept for Edappal and Vattamkulam, Kerala.
 
 ```
 apps/web/                 Next.js storefront and pages
-apps/web/app/             App Router pages (/, /cart, /wishlist, /products/[slug], /assistant)
+apps/web/app/             App Router pages (/, /cart, /wishlist, /products/[slug], /assistant, /login, /register, /checkout, /admin)
 apps/web/components/      Reusable UI
-apps/web/store/           Redux store, cart, wishlist and demo auth state
+apps/web/store/           Redux store, cart, wishlist and verified session display state
 apps/web/lib/              Demo product data and client-side data service
 apps/api/src/              Express app, middleware, API routes and config
 packages/shared/           Reusable JavaScript helpers and validation
@@ -91,7 +91,7 @@ Requirements: Node.js 20+, npm 10+, Git. Docker Desktop is needed for Compose/Ku
    Frontend: http://localhost:3000  
    API health: http://localhost:5000/api/v1/health
 
-   Stop with `docker compose down`. The MongoDB volume is retained unless explicitly removed.
+   Stop with `docker compose down`. The MongoDB volume is retained unless explicitly removed. To seed the five demo products, run `docker compose exec api node apps/api/scripts/seed-demo-products.js`. To create an admin, set `ADMIN_NAME`, `ADMIN_EMAIL`, and a unique `ADMIN_PASSWORD` of at least 12 characters in your local shell or `.env`, then run `npm run seed:admin --workspace=apps/api` with `MONGODB_URI=mongodb://localhost:27017/quickbasket`.
 
 ## AI assistant setup
 
