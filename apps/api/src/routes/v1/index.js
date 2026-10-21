@@ -10,14 +10,15 @@ const asyncHandler = require('../../utils/asyncHandler');
 
 const router = express.Router();
 const aiRouter = require('./ai');
+const productsRouter = require('./products');
 
 // ── Health ─────────────────────────────────────────────────────────────────────
 /**
  * GET /api/v1/health
  *
  * Public endpoint.  Returns a JSON object confirming the API process is alive.
- * It does NOT confirm MongoDB is connected — use a dedicated DB health check
- * for that once the database is wired in Phase 6.
+ * It confirms that the API process is responding. Database-backed routes also
+ * require a reachable MongoDB connection.
  *
  * Response:
  *   200 { success: true, data: { status: "ok", timestamp: "<ISO string>" } }
@@ -38,6 +39,7 @@ router.get(
 );
 
 router.use('/ai', aiRouter);
+router.use('/products', productsRouter);
 
 // ── Future routers ─────────────────────────────────────────────────────────────
 // Phase 6: const productsRouter = require('./products');
