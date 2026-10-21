@@ -64,6 +64,8 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
       target: deps   # Use deps stage so `next dev` is available
+      args:
+        NEXT_PUBLIC_API_URL: http://api:5000
     container_name: qb_web
     restart: unless-stopped
     ports:
