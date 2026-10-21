@@ -15,6 +15,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
 COPY packages/shared ./packages/shared
 COPY apps/web ./apps/web
+RUN mkdir -p apps/web/public
 COPY apps/api/package.json ./apps/api/package.json
 
 ARG NEXT_PUBLIC_API_URL=http://localhost:5000
