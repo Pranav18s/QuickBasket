@@ -1,34 +1,36 @@
 # QuickBasket on Kubernetes (local learning environment)
 
-These manifests are for a local Minikube/Docker Desktop portfolio demo. The MongoDB manifest is **not a production database architecture**.
+These manifests are for Minikube/Docker Desktop learning only. The MongoDB manifest is a demo single-replica database, not a production architecture.
 
-## 1. Build images
+## 1. Build images for Minikube
 
-From the repository root:
+Start Minikube first. In PowerShell, configure the Docker CLI to use Minikube's Docker daemon:
 
 ```powershell
+minikube docker-env --shell powershell | Invoke-Expression
 docker build -f apps/api/Dockerfile -t quickbasket-api:local .
-docker build -f apps/web/Dockerfile -t quickbasket-web:local --build-arg NEXT_PUBLIC_API_URL=http://localhost:5000 .
+docker build -f apps/web/Dockerfile -t quickbasket-web:local --build-arg NEXT_PUBLIC_API_URL=http://quickbasket-api:5000 .
 ```
 
-For Minikube, make the images visible to its Docker daemon before building:
+Run these commands from the repository root in the same PowerShell window. This makes the local images available to Minikube without pushing them to a registry.
 
-```powershell
-minikube docker-env | Invoke-Expression
-```
-
-Then run both docker build commands again in that same PowerShell window.
-
-## 2. Create the namespace and secret
+## 2. Create namespace, then secrets
 
 ```powershell
 kubectl apply -f k8s/namespace.yaml
-kubectl create secret generic quickbasket-secrets -n quickbasket --from-literal=JWT_SECRET="$(node -e \"console.log(require('crypto').randomBytes(48).toString('hex'))\")" --dry-run=client -o yaml | kubectl apply -f -
+$jwt = node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+kubectl create secret generic quickbasket-secrets -n quickbasket --from-literal=JWT_SECRET=$jwt --dry-run=client -o yaml | kubectl apply -f -
 ```
 
-Do not commit actual secrets to Git. Add `AI_PROVIDER_API_KEY` to this Kubernetes Secret only when using the AI endpoint.
+To enable the AI assistant, add your provider key to the Secret (never commit it to Git):
 
-## 3. Apply the stack
+```powershell
+kubectl create secret generic quickbasket-secrets -n quickbasket --from-literal=JWT_SECRET=$jwt --from-literal=AI_PROVIDER_API_KEY=YOUR_PROVIDER_KEY --dry-run=client -o yaml | kubectl apply -f -
+```
+
+Replace the placeholder locally. If you do not configure a key, the AI endpoint returns a clear configuration error.
+
+## 3. Apply and inspect
 
 ```powershell
 kubectl apply -f k8s/configmap.yaml
@@ -38,18 +40,21 @@ kubectl apply -f k8s/web-deployment.yaml
 kubectl -n quickbasket rollout status deployment/mongo
 kubectl -n quickbasket rollout status deployment/quickbasket-api
 kubectl -n quickbasket rollout status deployment/quickbasket-web
+kubectl -n quickbasket get pods,services
 kubectl -n quickbasket port-forward service/quickbasket-web 3000:3000
 ```
 
-Open http://localhost:3000. In another terminal, API health can be checked with:
+Open http://localhost:3000. In another PowerShell window, check the API:
 
 ```powershell
 kubectl -n quickbasket port-forward service/quickbasket-api 5000:5000
 Invoke-RestMethod http://localhost:5000/api/v1/health
 ```
 
-## Important networking note
+## Important notes
 
-The current Next.js rewrite uses `NEXT_PUBLIC_API_URL` at build time. A browser or server-side Next.js request cannot resolve the Kubernetes-only service name from outside the cluster. For public deployment, configure the frontend's API base URL to the public API URL, or put both behind one ingress/reverse proxy and use a same-origin `/api` route.
-
-For a real public production environment, use managed MongoDB, TLS/Ingress, an image registry, secret management, persistent backups, resource monitoring, and a secure deployment workflow. Do not expose MongoDB publicly.
+- The API currently exposes health and AI chat endpoints; MongoDB product/order persistence is still a future implementation.
+- The current storefront catalogue, cart and wishlist still use demo data/browser storage.
+- The Next.js rewrite target is configured through `NEXT_PUBLIC_API_URL`; this manifest points it at the in-cluster API service. If you change that value, rebuild the web image and test the rewrite.
+- Use managed MongoDB with authentication, TLS, private networking, backups and monitoring for public production hosting.
+- Do not expose MongoDB publicly. Do not put API keys in ConfigMaps, image layers, or Git.
