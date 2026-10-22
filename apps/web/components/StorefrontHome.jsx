@@ -424,9 +424,9 @@ export default function StorefrontHome() {
           <div className="absolute -right-12 -top-24 h-64 w-64 rounded-full border-[35px] border-white/5" />
           <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-emerald-100"><ShieldCheck size={14} /> Portfolio project</div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-emerald-100"><ShieldCheck size={14} /> Everyday essentials</div>
               <h2 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">A smarter little shop, built for the neighbourhood.</h2>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-emerald-100/75">QuickBasket is a full-stack portfolio demo. Product browsing, wishlist and basket interactions use sample data; real ordering, payment and delivery are not enabled.</p>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-emerald-100/75">Discover everyday pantry staples, fresh produce and household essentials through a simple, neighbourhood-focused shopping experience.</p>
             </div>
             <a href="#shop" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-extrabold text-emerald-950 transition hover:bg-emerald-50">Explore products <ArrowRight size={17} /></a>
           </div>
