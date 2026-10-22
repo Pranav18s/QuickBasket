@@ -14,7 +14,6 @@ import {
   ShoppingBasket,
   SlidersHorizontal,
   Star,
-  Truck,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { DEMO_CATEGORIES, DEMO_PRODUCTS } from "../lib/demoData";
@@ -149,7 +148,7 @@ export default function StorefrontHome() {
   const activeProducts = useMemo(() => {
     let list = catalogue.filter((product) => product.active && product.stock > 0);
     if (category !== "all") {
-      list = list.filter((product) => product.categorySlug === category);
+      list = list.filter((product) => product.categorySlug === category || product.category === DEMO_CATEGORIES.find((item) => item.slug === category)?.name);
     }
     const normalizedQuery = query.trim().toLowerCase();
     if (normalizedQuery) {
@@ -161,13 +160,21 @@ export default function StorefrontHome() {
     }
     if (sortBy === "price-low") list = [...list].sort((a, b) => a.pricePaise - b.pricePaise);
     if (sortBy === "price-high") list = [...list].sort((a, b) => b.pricePaise - a.pricePaise);
-    if (sortBy === "rating") list = [...list].sort((a, b) => b.rating - a.rating);
+    if (sortBy === "rating") list = [...list].sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
     if (sortBy === "featured") list = [...list].sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)));
     return list;
   }, [catalogue, category, query, sortBy]);
 
   const isWishlisted = (product) =>
     wishlistItems.some((item) => item.id === product.id || item.productId === product.id || item.slug === product.slug);
+
+  const selectCategory = (nextCategory) => {
+    setCategory(nextCategory);
+    setQuery("");
+    window.requestAnimationFrame(() => {
+      document.getElementById("shop")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   const handleAdd = (product) => {
     dispatch(
@@ -194,12 +201,12 @@ export default function StorefrontHome() {
   return (
     <main className="min-h-screen bg-[#fbfaf7] text-stone-900">
       <div className="bg-emerald-950 px-4 py-2 text-center text-xs font-medium tracking-wide text-emerald-50 sm:text-sm">
-        Fresh picks, everyday prices <span className="mx-2 text-emerald-500">•</span> A local grocery demo for Edappal & Vattamkulam
+        Fresh picks, everyday prices <span className="mx-2 text-emerald-500">•</span> Your neighbourhood grocery destination
       </div>
 
       <header className="sticky top-0 z-30 border-b border-stone-200/80 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <a href="#" className="flex shrink-0 items-center gap-2.5" aria-label="QuickBasket home">
+          <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="QuickBasket home">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-700 text-white shadow-md shadow-emerald-900/15">
               <ShoppingBasket size={23} />
             </span>
@@ -207,7 +214,7 @@ export default function StorefrontHome() {
               <span className="block text-xl font-black leading-none tracking-tight text-emerald-950">QuickBasket</span>
               <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-500">Freshness, simplified</span>
             </span>
-          </a>
+          </Link>
 
           <div className="ml-auto hidden max-w-xl flex-1 md:block">
             <label className="flex items-center gap-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 transition focus-within:border-emerald-500 focus-within:bg-white">
@@ -234,7 +241,6 @@ export default function StorefrontHome() {
                 try { await fetch("/api/v1/auth/logout", { method: "POST", credentials: "same-origin" }); } finally { dispatch(clearUser()); setNotice("You have been signed out"); window.setTimeout(() => setNotice(""), 2400); }
               }} className="hidden rounded-xl border border-stone-200 px-3 py-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 lg:inline-flex">Sign out</button>
             ) : <Link href="/login" className="hidden rounded-xl border border-stone-200 px-3 py-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 lg:inline-flex">Sign in</Link>}
-            <Link href="/assistant" aria-label="Open AI grocery assistant" className="hidden rounded-xl border border-emerald-200 px-3 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50 lg:inline-flex">AI Assistant</Link>
             <a href="/wishlist" aria-label={`Wishlist, ${wishlistItems.length} saved items`} className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
               <Heart size={19} />
               {wishlistItems.length > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-black text-white">{wishlistItems.length}</span>}
@@ -279,7 +285,7 @@ export default function StorefrontHome() {
               Shop groceries <ArrowRight size={17} />
             </a>
             <span className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-3.5 text-sm font-semibold text-stone-600">
-              <Truck size={17} className="text-emerald-700" /> Local-first demo
+              <MapPin size={17} className="text-emerald-700" /> Serving our neighbourhood
             </span>
           </div>
           <div className="mt-8 flex flex-wrap gap-x-5 gap-y-3 border-t border-stone-200 pt-5 text-xs font-medium text-stone-500 sm:text-sm">
@@ -320,7 +326,7 @@ export default function StorefrontHome() {
           </div>
           <div className="flex items-center gap-3 sm:justify-center sm:border-r sm:border-stone-100">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700"><Star size={19} /></span>
-            <span><strong className="block text-sm">Customer favourites</strong><span className="text-xs text-stone-500">Explore the demo catalogue</span></span>
+            <span><strong className="block text-sm">Customer favourites</strong><span className="text-xs text-stone-500">Explore our selection</span></span>
           </div>
           <div className="flex items-center gap-3 sm:justify-center">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700"><MapPin size={19} /></span>
@@ -336,17 +342,17 @@ export default function StorefrontHome() {
             <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950 sm:text-3xl">Shop by category</h2>
             <p className="mt-2 text-sm text-stone-500">Find your everyday favourites in a few clicks.</p>
           </div>
-          <button type="button" onClick={() => { setCategory("all"); setQuery(""); }} className="hidden items-center gap-1 text-sm font-bold text-emerald-800 hover:text-emerald-950 sm:flex">
+          <button type="button" onClick={() => selectCategory("all")} className="hidden items-center gap-1 text-sm font-bold text-emerald-800 hover:text-emerald-950 sm:flex">
             View all <ArrowRight size={15} />
           </button>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
-          <button type="button" onClick={() => setCategory("all")} className={`group rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md ${category === "all" ? "border-emerald-700 bg-emerald-50 ring-1 ring-emerald-700" : "border-stone-200 bg-white"}`}>
+          <button type="button" onClick={() => selectCategory("all")} className={`group rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md ${category === "all" ? "border-emerald-700 bg-emerald-50 ring-1 ring-emerald-700" : "border-stone-200 bg-white"}`}>
             <span className="mb-3 flex aspect-square items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><ShoppingBasket size={27} /></span>
             <span className="block text-xs font-bold leading-4 text-stone-800">All groceries</span>
           </button>
           {DEMO_CATEGORIES.map((item) => (
-            <button key={item.id} type="button" onClick={() => setCategory(item.slug)} className={`group rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md ${category === item.slug ? "border-emerald-700 bg-emerald-50 ring-1 ring-emerald-700" : "border-stone-200 bg-white"}`}>
+            <button key={item.id} type="button" onClick={() => selectCategory(item.slug)} className={`group rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md ${category === item.slug ? "border-emerald-700 bg-emerald-50 ring-1 ring-emerald-700" : "border-stone-200 bg-white"}`}>
               <span className="mb-3 block aspect-square overflow-hidden rounded-xl bg-stone-100">
                 <img src={item.image} alt="" loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
               </span>
@@ -364,7 +370,7 @@ export default function StorefrontHome() {
               <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950 sm:text-3xl">
                 {category === "all" ? "Popular in your basket" : DEMO_CATEGORIES.find((item) => item.slug === category)?.name || "Popular in your basket"}
               </h2>
-              <p className="mt-2 text-sm text-stone-500">{activeProducts.length} products to explore in this demo catalogue.</p>
+              <p className="mt-2 text-sm text-stone-500">{activeProducts.length} {activeProducts.length === 1 ? "product" : "products"} available</p>
             </div>
             <label className="flex items-center gap-2 self-start rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-600 sm:self-auto">
               <SlidersHorizontal size={16} />
@@ -430,8 +436,8 @@ export default function StorefrontHome() {
       <footer className="border-t border-stone-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-7 text-xs text-stone-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 font-bold text-emerald-950"><ShoppingBasket size={17} /> QuickBasket <span className="font-normal text-stone-400">© 2026</span></div>
-          <p>Made as a portfolio project for Edappal & Vattamkulam, Kerala.</p>
-          <p className="inline-flex items-center gap-1"><ShieldCheck size={13} /> Demo only — no real transactions</p>
+          <nav aria-label="Footer navigation" className="flex flex-wrap items-center gap-4 font-medium"><Link href="#shop" className="hover:text-emerald-800">Shop</Link><Link href="/login" className="hover:text-emerald-800">Sign in</Link><Link href="/register" className="hover:text-emerald-800">Create account</Link><Link href="/wishlist" className="hover:text-emerald-800">Wishlist</Link></nav>
+          <p className="inline-flex items-center gap-1"><ShieldCheck size={13} /> Secure account access</p>
         </div>
       </footer>
 
