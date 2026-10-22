@@ -12,6 +12,7 @@
   "dependencies": {
     "@quickbasket/shared": "*",
     "@reduxjs/toolkit": "^2.5.0",
+    "lucide-react": "^1.60.0",
     "next": "^15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
