@@ -74,6 +74,8 @@ services:
       # Mount source for hot-reload.
       - ./apps/web/app:/app/apps/web/app
       - ./apps/web/components:/app/apps/web/components
+      # The deps image does not contain app source; mount lib too so imports resolve.
+      - ./apps/web/lib:/app/apps/web/lib
       - ./apps/web/store:/app/apps/web/store
       - ./apps/web/public:/app/apps/web/public
     environment:
