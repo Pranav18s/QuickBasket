@@ -22,6 +22,10 @@ const env = {
   JWT_SECRET: process.env.JWT_SECRET || 'INSECURE_FALLBACK_CHANGE_IN_PRODUCTION',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  // Override to false for local HTTP demos; defaults to secure cookies in production.
+  COOKIE_SECURE: process.env.COOKIE_SECURE === undefined
+    ? process.env.NODE_ENV === 'production'
+    : process.env.COOKIE_SECURE === 'true',
   AI_PROVIDER_API_KEY: process.env.AI_PROVIDER_API_KEY || '',
   AI_PROVIDER_BASE_URL: process.env.AI_PROVIDER_BASE_URL || 'https://api.openai.com/v1',
   AI_MODEL: process.env.AI_MODEL || 'gpt-4o-mini',
