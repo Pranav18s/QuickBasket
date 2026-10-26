@@ -8,7 +8,9 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "lint": "eslint src --ext .js",
-    "test": "node --test src/**/*.test.js"
+    "test": "node --test src/**/*.test.js",
+    "seed": "node scripts/seed-demo-products.js",
+    "seed:admin": "node scripts/ensure-admin.js"
   },
   "dependencies": {
     "@quickbasket/shared": "*",
@@ -31,8 +33,12 @@
     "nodemon": "^3.1.9"
   },
   "nodemonConfig": {
-    "watch": ["src"],
+    "watch": [
+      "src"
+    ],
     "ext": "js,json",
-    "ignore": ["src/**/*.test.js"]
+    "ignore": [
+      "src/**/*.test.js"
+    ]
   }
 }
