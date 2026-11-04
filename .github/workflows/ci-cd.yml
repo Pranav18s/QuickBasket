@@ -1,0 +1,247 @@
+# QuickBasket CI/CD
+#
+# CI is executable: lint, tests, Next.js build, Docker image builds,
+# Docker Compose configuration validation, and Kubernetes manifest validation.
+#
+# CD examples below are intentionally commented out. They will NOT deploy.
+#
+# IMPORTANT:
+# - k8s/ currently contains Minikube/demo manifests, not production EKS manifests.
+# - docker-compose.yml is local development configuration, not a production EC2 stack.
+# - Configure secrets and production-specific manifests before enabling any CD section.
+
+name: QuickBasket CI/CD
+
+on:
+  push:
+    branches: [main, develop, "feature/**"]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quickbasket-ci-cd-\${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint API
+        run: npm run lint --workspace=apps/api
+      - name: Lint frontend
+        run: npm run lint --workspace=apps/web
+
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: API tests
+        run: npm run test --workspace=apps/api --if-present
+      - name: Shared package tests
+        run: npm run test --workspace=packages/shared --if-present
+
+  frontend-build:
+    name: Frontend production build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build Next.js
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:5000
+        run: npm run build --workspace=apps/web
+
+  docker-build:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: false
+          tags: quickbasket-api:ci-\${{ github.sha }}
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: false
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://quickbasket-api:5000
+          tags: quickbasket-web:ci-\${{ github.sha }}
+
+  docker-compose-validation:
+    name: Validate Docker Compose
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Validate local Compose configuration
+        run: docker compose -f docker-compose.yml config --quiet
+
+  kubernetes-validation:
+    name: Validate Kubernetes manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      # Schema validation only; this does not start Minikube or a cluster.
+      - name: Validate k8s manifests with Kubeconform
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/work" \
+            ghcr.io/yannh/kubeconform:v0.6.7 \
+            -strict -summary /work/k8s
+
+# ---------------------------------------------------------------------------
+# DISABLED CD EXAMPLES — COMMENTS ONLY, NOT EXECUTABLE
+# ---------------------------------------------------------------------------
+#
+# 1) DOCKER HUB — publish built images
+#
+# docker-hub-publish:
+#   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+#   needs: [lint, test, frontend-build, docker-build, docker-compose-validation, kubernetes-validation]
+#   runs-on: ubuntu-latest
+#   steps:
+#     - uses: actions/checkout@v4
+#     - uses: docker/setup-buildx-action@v3
+#     - uses: docker/login-action@v3
+#       with:
+#         username: \${{ secrets.DOCKERHUB_USERNAME }}
+#         password: \${{ secrets.DOCKERHUB_TOKEN }}
+#     - uses: docker/build-push-action@v6
+#       with:
+#         context: .
+#         file: apps/api/Dockerfile
+#         push: true
+#         tags: YOUR_DOCKERHUB_USERNAME/quickbasket-api:latest
+#     - uses: docker/build-push-action@v6
+#       with:
+#         context: .
+#         file: apps/web/Dockerfile
+#         push: true
+#         build-args: |
+#           NEXT_PUBLIC_API_URL=YOUR_PUBLIC_API_URL
+#         tags: YOUR_DOCKERHUB_USERNAME/quickbasket-web:latest
+#
+# Before enabling: create Docker Hub repositories and GitHub Actions secrets.
+# Never put registry credentials in this YAML file.
+#
+# 2) AWS ECR + EKS — publish images to ECR and deploy to EKS
+#
+# eks-deploy:
+#   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+#   needs: [lint, test, frontend-build, docker-build, docker-compose-validation, kubernetes-validation]
+#   runs-on: ubuntu-latest
+#   permissions:
+#     contents: read
+#     id-token: write
+#   steps:
+#     - uses: actions/checkout@v4
+#     - uses: aws-actions/configure-aws-credentials@v4
+#       with:
+#         role-to-assume: \${{ secrets.AWS_ROLE_ARN }}
+#         aws-region: ap-south-1
+#     - uses: aws-actions/amazon-ecr-login@v2
+#     - name: Build and push API and web images to ECR
+#       run: |
+#         # Build/tag/push both images with commit-specific ECR tags.
+#         echo "Add approved ECR build-and-push commands here."
+#     - name: Configure kubectl for EKS
+#       run: |
+#         aws eks update-kubeconfig --region ap-south-1 --name "$EKS_CLUSTER_NAME"
+#     - name: Deploy production Kubernetes manifests
+#       run: |
+#         # Apply a separate production manifest set or Kustomize overlay.
+#         # Update Deployment images to the exact ECR tags for this commit.
+#         # Do NOT apply k8s/mongo.yaml in production; it is a demo database.
+#         # Do NOT use the current local image tags ending in :local.
+#         echo "Production EKS manifests and rollout commands are still required."
+#
+# Before enabling: create ECR/EKS, configure GitHub OIDC and an IAM role,
+# store production secrets securely, and create production Kubernetes manifests
+# using Atlas/managed MongoDB and ECR image references. This workflow creates
+# no AWS resources in its current state.
+#
+# 3) AWS EC2 — Docker-based deployment over SSH
+#
+# ec2-deploy:
+#   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+#   needs: [lint, test, frontend-build, docker-build]
+#   runs-on: ubuntu-latest
+#   steps:
+#     - uses: actions/checkout@v4
+#     - name: Deploy to EC2
+#       run: |
+#         # Connect using a dedicated SSH deploy key stored in GitHub Secrets.
+#         # Pull versioned images from a registry on the EC2 host.
+#         # Start them using a dedicated production Compose file.
+#         # Verify API health and frontend response after deployment.
+#         echo "EC2 deployment is a disabled teaching example."
+#
+# Before enabling: create a production Compose file. The existing
+# docker-compose.yml is for local development and must not be used as-is.
+# Configure EC2 networking, SSH access, registry authentication and secrets.
+#
+# 4) VERCEL — frontend deployment
+#
+# vercel-deploy:
+#   # Use only if Vercel is not already deploying automatically from GitHub.
+#   # needs: [lint, test, frontend-build]
+#   # steps:
+#   #   - uses: actions/checkout@v4
+#   #   - run: npx vercel deploy --prod --token=\${{ secrets.VERCEL_TOKEN }}
+#   # Required configuration: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID.
+#   # Keep NEXT_PUBLIC_API_URL configured for the production API.
+#   # This entire job is intentionally disabled.
+#
+# 5) RENDER — backend deployment
+#
+# render-deploy:
+#   # Use only if Render is not already deploying automatically from GitHub.
+#   # needs: [lint, test]
+#   # steps:
+#   #   - run: curl --fail --request POST "\${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+#   # Required secret: RENDER_DEPLOY_HOOK_URL.
+#   # This entire job is intentionally disabled.
+#
+# NOTE: Vercel and Render are hosted cloud platforms, not local services.
+# Check existing GitHub auto-deploy settings before enabling workflow
+# deployments, or the same commit could trigger duplicate deployments.
