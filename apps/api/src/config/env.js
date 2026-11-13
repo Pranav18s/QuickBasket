@@ -1,18 +1,9 @@
 /**
- * apps/api/src/config/env.js
- *
- * Loads and validates environment variables from the root .env file.
- * Call this once at app startup before any other module that needs env vars.
- *
- * Why load dotenv here?
- *   We centralise environment loading so that every other module simply
- *   reads process.env.* without worrying about whether dotenv has run yet.
+ * Loads and validates environment variables from the repository root.
  */
-
 const path = require('path');
 const dotenv = require('dotenv');
 
-// Load .env from the repo root (two levels up from apps/api/src/config/)
 dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
 const env = {
@@ -22,10 +13,10 @@ const env = {
   JWT_SECRET: process.env.JWT_SECRET || 'INSECURE_FALLBACK_CHANGE_IN_PRODUCTION',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  // Override to false for local HTTP demos; defaults to secure cookies in production.
   COOKIE_SECURE: process.env.COOKIE_SECURE === undefined
     ? process.env.NODE_ENV === 'production'
     : process.env.COOKIE_SECURE === 'true',
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
   AI_PROVIDER_API_KEY: process.env.AI_PROVIDER_API_KEY || '',
   AI_PROVIDER_BASE_URL: process.env.AI_PROVIDER_BASE_URL || 'https://api.openai.com/v1',
   AI_MODEL: process.env.AI_MODEL || 'gpt-4o-mini',
