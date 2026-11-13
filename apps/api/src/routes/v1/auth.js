@@ -1,8 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
-const { body, validationResult } = require('express-validator');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 const asyncHandler = require('../../utils/asyncHandler');
 const ApiError = require('../../utils/ApiError');
 const User = require('../../models/User');
@@ -10,6 +9,7 @@ const env = require('../../config/env');
 const { requireAuth, COOKIE_NAME } = require('../../middleware/auth');
 
 const router = express.Router();
+const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
@@ -17,11 +17,6 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { success: false, message: 'Too many sign-in attempts. Try again later.' },
 });
-
-function checkValidation(req) {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) throw new ApiError(400, 'Please check the submitted fields.', errors.array());
-}
 
 function sessionCookie(res, token) {
   res.cookie(COOKIE_NAME, token, {
@@ -37,66 +32,67 @@ function signToken(user) {
   return jwt.sign({ sub: user._id.toString() }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN });
 }
 
-router.post(
-  '/register',
-  authLimiter,
-  [
-    body('name').isString().trim().isLength({ min: 2, max: 100 }),
-    body('email').isEmail().normalizeEmail().isLength({ max: 254 }),
-    body('password').isString().isLength({ min: 8, max: 72 }),
-  ],
-  asyncHandler(async (req, res) => {
-    checkValidation(req);
-    const email = req.body.email.toLowerCase();
-    if (await User.exists({ email })) throw new ApiError(409, 'An account with this email already exists.');
+// Google Identity Services sends an ID token. Verify its signature, issuer,
+// expiry and audience on the server before using any profile information.
+router.post('/google', authLimiter, asyncHandler(async (req, res) => {
+  if (!env.GOOGLE_CLIENT_ID) throw new ApiError(503, 'Google sign-in is not configured on the server.');
+  const idToken = req.body?.credential;
+  if (typeof idToken !== 'string' || !idToken) throw new ApiError(400, 'Google credential is missing.');
 
-    const passwordHash = await bcrypt.hash(req.body.password, 12);
-    let user;
-    try {
-      user = await User.create({ name: req.body.name.trim(), email, passwordHash, role: 'customer' });
-    } catch (error) {
-      if (error.code === 11000) throw new ApiError(409, 'An account with this email already exists.');
-      throw error;
-    }
-
-    sessionCookie(res, signToken(user));
-    res.status(201).json({
-      success: true,
-      data: { user: { id: user._id, name: user.name, email: user.email, role: user.role } },
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: env.GOOGLE_CLIENT_ID,
     });
-  })
-);
+    payload = ticket.getPayload();
+  } catch {
+    throw new ApiError(401, 'Google sign-in could not be verified. Please try again.');
+  }
 
-router.post(
-  '/login',
-  authLimiter,
-  [
-    body('email').isEmail().normalizeEmail(),
-    body('password').isString().isLength({ min: 1, max: 72 }),
-  ],
-  asyncHandler(async (req, res) => {
-    checkValidation(req);
-    const user = await User.findOne({ email: req.body.email.toLowerCase() }).select('+passwordHash');
-    const valid = user && (await bcrypt.compare(req.body.password, user.passwordHash));
-    if (!valid) throw new ApiError(401, 'Email or password is incorrect.');
+  if (!payload?.sub || !payload.email || payload.email_verified !== true) {
+    throw new ApiError(401, 'A verified Google email is required.');
+  }
 
-    sessionCookie(res, signToken(user));
-    res.json({ success: true, data: { user: { id: user._id, name: user.name, email: user.email, role: user.role } } });
-  })
-);
+  const email = payload.email.toLowerCase().trim();
+  let user = await User.findOne({ $or: [{ googleId: payload.sub }, { email }] });
 
-router.get(
-  '/me',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    res.json({ success: true, data: { user: { id: req.user._id, name: req.user.name, email: req.user.email, role: req.user.role } } });
-  })
-);
+  if (user) {
+    // A verified Google email proves control of the matching email address.
+    // Preserve existing roles (including admin); never grant admin from Google claims.
+    if (user.googleId && user.googleId !== payload.sub) {
+      throw new ApiError(409, 'This email is already linked to another Google account.');
+    }
+    if (!user.googleId) user.googleId = payload.sub;
+    user.name = (payload.name || user.name).trim().slice(0, 100);
+    await user.save();
+  } else {
+    user = await User.create({
+      name: (payload.name || email.split('@')[0]).trim().slice(0, 100),
+      email,
+      googleId: payload.sub,
+      role: 'customer',
+    });
+  }
+
+  sessionCookie(res, signToken(user));
+  res.json({
+    success: true,
+    data: { user: { id: user._id, name: user.name, email: user.email, role: user.role } },
+  });
+}));
+
+router.get('/me', requireAuth, asyncHandler(async (req, res) => {
+  res.json({
+    success: true,
+    data: { user: { id: req.user._id, name: req.user.name, email: req.user.email, role: req.user.role } },
+  });
+}));
 
 router.post('/logout', (_req, res) => {
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
-    secure: env.NODE_ENV === 'production',
+    secure: env.COOKIE_SECURE,
     sameSite: 'lax',
     path: '/',
   });
