@@ -13,6 +13,8 @@ import {
   ShieldCheck,
   ShoppingBasket,
   SlidersHorizontal,
+  UserRound,
+  LogOut,
   Star,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
@@ -216,31 +218,47 @@ export default function StorefrontHome() {
             </span>
           </Link>
 
-          <div className="ml-auto hidden max-w-xl flex-1 md:block">
-            <label className="flex items-center gap-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 transition focus-within:border-emerald-500 focus-within:bg-white">
-              <Search size={18} className="shrink-0 text-stone-400" />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search rice, fresh fruits, vegetables..."
-                className="w-full bg-transparent text-sm outline-none placeholder:text-stone-400"
-                aria-label="Search products"
-              />
-              <kbd className="hidden rounded-md border border-stone-200 bg-white px-1.5 py-0.5 text-[10px] text-stone-400 lg:inline">SEARCH</kbd>
-            </label>
-          </div>
+          <form
+            role="search"
+            onSubmit={(event) => {
+              event.preventDefault();
+              setCategory("all");
+              document.getElementById("shop")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="ml-auto hidden max-w-xl flex-1 items-center gap-2 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-2.5 transition focus-within:border-emerald-500 focus-within:bg-white md:flex"
+          >
+            <Search size={18} className="shrink-0 text-stone-400" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search rice, fresh fruits, vegetables..."
+              className="w-full bg-transparent py-1 text-sm outline-none placeholder:text-stone-400"
+              aria-label="Search products"
+            />
+            <button type="submit" className="shrink-0 rounded-xl bg-emerald-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-800">
+              Search
+            </button>
+          </form>
 
           <div className="ml-auto flex items-center gap-2 md:ml-0">
             <div className="hidden items-center gap-2 rounded-xl px-2 py-2 text-stone-600 lg:flex">
               <MapPin size={18} className="text-emerald-700" />
               <span className="text-xs leading-4"><strong className="block text-stone-800">Delivering around</strong>Edappal, Kerala</span>
             </div>
-            {currentUser?.role === "admin" && <Link href="/admin" className="hidden rounded-xl border border-emerald-200 px-3 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50 xl:inline-flex">Admin</Link>}
+            {currentUser?.role === "admin" && <Link href="/admin" className="hidden rounded-xl border border-emerald-200 px-3 py-2.5 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50 xl:inline-flex">Admin</Link>}
             {currentUser ? (
-              <button type="button" onClick={async () => {
-                try { await fetch("/api/v1/auth/logout", { method: "POST", credentials: "same-origin" }); } finally { dispatch(clearUser()); setNotice("You have been signed out"); window.setTimeout(() => setNotice(""), 2400); }
-              }} className="hidden rounded-xl border border-stone-200 px-3 py-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 lg:inline-flex">Sign out</button>
-            ) : <Link href="/login" className="hidden rounded-xl border border-stone-200 px-3 py-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 lg:inline-flex">Sign in</Link>}
+              <>
+                <Link href="/profile" aria-label="View profile" className="inline-flex items-center gap-2 rounded-xl border border-stone-200 px-3 py-2.5 text-sm font-semibold text-stone-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">
+                  <UserRound size={17} />
+                  <span className="hidden sm:inline">View profile</span>
+                </Link>
+                <button type="button" onClick={async () => {
+                  try { await fetch("/api/v1/auth/logout", { method: "POST", credentials: "same-origin" }); } finally { dispatch(clearUser()); setNotice("You have been signed out"); window.setTimeout(() => setNotice(""), 2400); }
+                }} className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 px-3 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">
+                  <LogOut size={16} /><span className="hidden sm:inline">Sign out</span>
+                </button>
+              </>
+            ) : <Link href="/login" className="inline-flex rounded-xl border border-stone-200 px-3 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">Sign in</Link>}
             <a href="/wishlist" aria-label={`Wishlist, ${wishlistItems.length} saved items`} className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
               <Heart size={19} />
               {wishlistItems.length > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-black text-white">{wishlistItems.length}</span>}
@@ -253,18 +271,27 @@ export default function StorefrontHome() {
           </div>
         </div>
 
-        <div className="border-t border-stone-100 px-4 py-3 md:hidden">
-          <label className="flex items-center gap-3 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 focus-within:border-emerald-500">
-            <Search size={17} className="text-stone-400" />
+        <form
+          role="search"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setCategory("all");
+            document.getElementById("shop")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          className="border-t border-stone-100 px-4 py-3 md:hidden"
+        >
+          <div className="flex items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 focus-within:border-emerald-500">
+            <Search size={17} className="shrink-0 text-stone-400" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search groceries..."
-              className="w-full bg-transparent text-sm outline-none placeholder:text-stone-400"
+              className="w-full bg-transparent py-1 text-sm outline-none placeholder:text-stone-400"
               aria-label="Search products"
             />
-          </label>
-        </div>
+            <button type="submit" className="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white">Search</button>
+          </div>
+        </form>
       </header>
 
       <section className="mx-auto grid max-w-7xl gap-8 px-4 pb-12 pt-8 sm:px-6 sm:pt-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-12 lg:px-8 lg:pb-16 lg:pt-14">
@@ -400,7 +427,7 @@ export default function StorefrontHome() {
 
           {activeProducts.length > 0 ? (
             <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
-              {activeProducts.slice(0, 16).map((product) => (
+              {(query.trim() ? activeProducts : activeProducts.slice(0, 16)).map((product) => (
                 <ProductCard key={product.id} product={product} onAdd={handleAdd} inWishlist={isWishlisted(product)} onWishlist={handleWishlist} />
               ))}
             </div>
