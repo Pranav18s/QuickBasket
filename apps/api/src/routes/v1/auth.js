@@ -55,7 +55,7 @@ router.post('/google', authLimiter, asyncHandler(async (req, res) => {
   }
 
   const email = payload.email.toLowerCase().trim();
-  let user = await User.findOne({ $or: [{ googleId: payload.sub }, { email }] });
+  let user = await User.findOne({ $or: [{ googleId: payload.sub }, { email }] }).select('+googleId');
 
   if (user) {
     // A verified Google email proves control of the matching email address.
