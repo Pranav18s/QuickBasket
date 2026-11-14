@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quickbasket-web
+  namespace: quickbasket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: quickbasket-web
+  template:
+    metadata:
+      labels:
+        app: quickbasket-web
+    spec:
+      containers:
+        - name: web
+          image: quickbasket-web:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: NEXT_PUBLIC_API_URL
+              value: "http://quickbasket-api:5000"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quickbasket-web
+  namespace: quickbasket
+spec:
+  selector:
+    app: quickbasket-web
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+  type: NodePort

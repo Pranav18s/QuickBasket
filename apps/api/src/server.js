@@ -1,38 +1,35 @@
 /**
- * apps/api/src/server.js
- *
- * Entry point — creates the Express app and starts listening.
- *
- * Note on MongoDB:
- *   connectDB() is imported but NOT called in this starter scaffold.
- *   The database connection will be enabled in Phase 6 when Mongoose models
- *   and the seed script are in place.  The health endpoint works without a DB.
+ * API entry point. Connect to MongoDB before accepting traffic so that
+ * database-backed endpoints do not silently run in a degraded state.
  */
-
-// Load environment variables FIRST, before any other imports that use them.
 require('./config/env');
 
 const { createApp } = require('./app');
 const env = require('./config/env');
-// const { connectDB } = require('./config/db'); // Uncomment in Phase 6
+const { connectDB } = require('./config/db');
 
-const app = createApp();
-const PORT = env.PORT;
+async function startServer() {
+  await connectDB();
+  const app = createApp();
+  const server = app.listen(env.PORT, () => {
+    console.log(`[API] QuickBasket API listening on port ${env.PORT}`);
+    console.log(`[API] Health: http://localhost:${env.PORT}/api/v1/health`);
+  });
 
-app.listen(PORT, () => {
-  console.log(`[API] QuickBasket API is running at http://localhost:${PORT}`);
-  console.log(`[API] Environment: ${env.NODE_ENV}`);
-  console.log(`[API] Health check: http://localhost:${PORT}/api/v1/health`);
-  // console.log('[DB] MongoDB connection will be enabled in Phase 6.');
-});
+  const shutdown = (signal) => {
+    console.log(`[API] ${signal} received; shutting down.`);
+    server.close(async () => {
+      const mongoose = require('mongoose');
+      await mongoose.disconnect();
+      process.exit(0);
+    });
+  };
 
-// ── Graceful shutdown ─────────────────────────────────────────────────────────
-process.on('unhandledRejection', (reason) => {
-  console.error('[Server] Unhandled promise rejection:', reason);
-  process.exit(1);
-});
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+}
 
-process.on('uncaughtException', (error) => {
-  console.error('[Server] Uncaught exception:', error);
+startServer().catch((error) => {
+  console.error('[API] Startup failed:', error.message);
   process.exit(1);
 });
