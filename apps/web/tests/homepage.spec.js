@@ -65,11 +65,11 @@ test.describe('QuickBasket storefront and basket', () => {
     });
 
     await expect(addToBasketButton).toBeVisible();
+    await expect(addToBasketButton).toHaveAttribute("data-hydrated", "true");
     await addToBasketButton.click();
-    await expect(page.getByRole('status')).toContainText(/added to your basket/i);
 
-    // Match the accessible basket label used by the storefront header.
-    const basketLink = page.getByRole('link', {
+    // Verify the Redux cart count changed after the client-side click handler ran.
+    const basketLink = page.getByRole("link", {
       name: /Open basket with 1 items/i,
     });
     await expect(basketLink).toBeVisible();

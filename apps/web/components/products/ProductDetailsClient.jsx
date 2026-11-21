@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Check, Heart, Minus, Plus, ShoppingBasket, Star } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { addItem, selectCartItemCount } from "../../store/cartSlice";
@@ -20,6 +20,11 @@ export default function ProductDetailsClient({ product, relatedProducts = [] }) 
   const wishlistItems = useSelector(selectWishlistItems);
   const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState("");
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
   const inWishlist = wishlistItems.some(
     (item) => item.id === product.id || item.productId === product.id || item.slug === product.slug
   );
@@ -120,7 +125,7 @@ export default function ProductDetailsClient({ product, relatedProducts = [] }) 
                 <span className="min-w-10 text-center text-sm font-bold" aria-live="polite">{quantity}</span>
                 <button type="button" onClick={() => setQuantity((current) => Math.min(Math.max(1, product.stock), current + 1))} disabled={quantity >= product.stock || product.stock <= 0} aria-label="Increase quantity" className="p-3 text-stone-700 hover:text-emerald-800 disabled:opacity-40"><Plus size={16} /></button>
               </div>
-              <button type="button" onClick={handleAdd} disabled={product.stock <= 0} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-stone-300">
+              <button type="button" onClick={handleAdd} disabled={product.stock <= 0} data-hydrated={isHydrated ? "true" : "false"} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-stone-300">
                 <ShoppingBasket size={18} /> Add {quantity} to basket
               </button>
               <button type="button" onClick={handleWishlist} aria-pressed={inWishlist} className={`inline-flex h-12 w-12 items-center justify-center rounded-xl border transition ${inWishlist ? "border-rose-200 bg-rose-50 text-rose-600" : "border-stone-200 text-stone-600 hover:border-rose-200 hover:text-rose-600"}`} aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}>
