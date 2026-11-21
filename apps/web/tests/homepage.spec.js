@@ -22,7 +22,6 @@ test.describe('QuickBasket storefront and basket', () => {
 
   test('customer can add a product from the homepage to the basket', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('main')).toHaveAttribute('data-hydrated', 'true');
 
     const addButton = page.getByRole('button', {
       name: 'Add',
@@ -53,7 +52,6 @@ test.describe('QuickBasket storefront and basket', () => {
 
   test('customer can add a product from its details page to the basket', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('main')).toHaveAttribute('data-hydrated', 'true');
 
     const productLink = page.getByRole('link', {
       name: /View .* details/i,
@@ -61,7 +59,6 @@ test.describe('QuickBasket storefront and basket', () => {
 
     await expect(productLink).toBeVisible();
     await productLink.click();
-    await expect(page.locator('main')).toHaveAttribute('data-hydrated', 'true');
 
     const addToBasketButton = page.getByRole('button', {
       name: /Add 1 to basket/i,

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowLeft, Check, Heart, Minus, Plus, ShoppingBasket, Star } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { addItem, selectCartItemCount } from "../../store/cartSlice";
@@ -20,12 +20,6 @@ export default function ProductDetailsClient({ product, relatedProducts = [] }) 
   const wishlistItems = useSelector(selectWishlistItems);
   const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState("");
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
   const inWishlist = wishlistItems.some(
     (item) => item.id === product.id || item.productId === product.id || item.slug === product.slug
   );
@@ -57,7 +51,7 @@ export default function ProductDetailsClient({ product, relatedProducts = [] }) 
   };
 
   return (
-    <main data-hydrated={isHydrated ? "true" : "false"} className="min-h-screen bg-[#fbfaf7] text-stone-900">
+    <main className="min-h-screen bg-[#fbfaf7] text-stone-900">
       <div className="bg-emerald-950 px-4 py-2 text-center text-xs font-medium text-emerald-50 sm:text-sm">
         A local grocery demo for Edappal & Vattamkulam
       </div>

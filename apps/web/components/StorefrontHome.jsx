@@ -121,10 +121,7 @@ export default function StorefrontHome() {
   const [category, setCategory] = useState("all");
   const [sortBy, setSortBy] = useState("featured");
   const [notice, setNotice] = useState("");
-  const [isHydrated, setIsHydrated] = useState(false);
-
   useEffect(() => {
-    setIsHydrated(true);
     let cancelled = false;
     api.get("/v1/products?limit=50")
       .then((response) => {
@@ -203,7 +200,7 @@ export default function StorefrontHome() {
   };
 
   return (
-    <main data-hydrated={isHydrated ? "true" : "false"} className="min-h-screen bg-[#fbfaf7] text-stone-900">
+    <main className="min-h-screen bg-[#fbfaf7] text-stone-900">
       <div className="bg-emerald-950 px-4 py-2 text-center text-xs font-medium tracking-wide text-emerald-50 sm:text-sm">
         Fresh picks, everyday prices <span className="mx-2 text-emerald-500">•</span> Your neighbourhood grocery destination
       </div>
