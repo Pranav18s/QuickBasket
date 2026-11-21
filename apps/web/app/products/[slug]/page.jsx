@@ -1,17 +1,18 @@
 import { notFound } from "next/navigation";
+import api from "../../../lib/api";
 import { DEMO_PRODUCTS } from "../../../lib/demoData";
 import ProductDetailsClient from "../../../components/products/ProductDetailsClient";
 
 async function loadProduct(slug) {
   const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
   try {
-    const response = await fetch(`${apiBase}/api/v1/products/${encodeURIComponent(slug)}`, { cache: "no-store" });
-    if (response.status === 404) {
+    const response = await api.get(`/api/v1/products/${encodeURIComponent(slug)}`, { baseURL: apiBase });
+    if (response.data?.success === false) {
       const demo = DEMO_PRODUCTS.find((item) => item.slug === slug && item.active);
       return { product: demo || null, source: demo ? "demo" : "api" };
     }
-    if (response.ok) {
-      const payload = await response.json();
+    {
+      const payload = response.data;
       const item = payload?.data?.product;
       if (item) return { product: { ...item, id: item._id || item.id, rating: item.rating ?? "New", reviewsCount: item.reviewsCount ?? 0 }, source: "api" };
     }
@@ -42,9 +43,9 @@ export default async function ProductPage({ params }) {
   if (source === "api") {
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-      const response = await fetch(`${apiBase}/api/v1/products?limit=50`, { cache: "no-store" });
-      if (response.ok) {
-        const payload = await response.json();
+      const response = await api.get("/api/v1/products?limit=50", { baseURL: apiBase });
+      {
+        const payload = response.data;
         relatedProducts = (payload?.data?.products || [])
           .filter((item) => item.active && item.stock > 0 && item.categorySlug === product.categorySlug && (item._id || item.id) !== product.id)
           .slice(0, 4)

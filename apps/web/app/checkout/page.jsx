@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import api from "../../lib/api";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { ArrowLeft, CheckCircle2, LoaderCircle, ShoppingBasket } from "lucide-react";
@@ -27,23 +28,17 @@ export default function CheckoutPage() {
     setBusy(true);
     setError("");
     try {
-      const response = await fetch("/api/v1/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({
-          items: items.map((item) => ({
-            ...( /^[a-f\d]{24}$/i.test(String(item.productId || "")) ? { productId: item.productId } : {}),
-            slug: item.slug,
-            quantity: item.quantity,
-          })),
-          address: form,
-          paymentMethod: "cod",
-        }),
+      const response = await api.post("/v1/orders", {
+        items: items.map((item) => ({
+          ...( /^[a-f\d]{24}$/i.test(String(item.productId || "")) ? { productId: item.productId } : {}),
+          slug: item.slug,
+          quantity: item.quantity,
+        })),
+        address: form,
+        paymentMethod: "cod",
       });
-      const payload = await response.json();
-      if (!response.ok || !payload.success) {
-        if (response.status === 401) throw new Error("Please sign in before placing a demo order.");
+      const payload = response.data;
+      if (!payload.success) {
         throw new Error(payload.message || "We could not place the order.");
       }
       setOrder(payload.data.order);

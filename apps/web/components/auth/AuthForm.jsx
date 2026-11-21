@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import api from "../../lib/api";
 import Script from "next/script";
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -28,14 +29,9 @@ export default function AuthForm() {
         setBusy(true);
         setError("");
         try {
-          const response = await fetch("/api/v1/auth/google", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "same-origin",
-            body: JSON.stringify({ credential }),
-          });
-          const payload = await response.json();
-          if (!response.ok || !payload.success) {
+          const response = await api.post("/v1/auth/google", { credential });
+          const payload = response.data;
+          if (!payload.success) {
             throw new Error(payload.message || "Google sign-in failed. Please try again.");
           }
           dispatch(setUser(payload.data.user));

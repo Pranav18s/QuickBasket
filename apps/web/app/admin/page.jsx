@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import api from "../../lib/api";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, LoaderCircle, RefreshCw, ShieldCheck } from "lucide-react";
 
@@ -21,13 +22,13 @@ export default function AdminPage() {
     setError("");
     try {
       const [productsResponse, ordersResponse] = await Promise.all([
-        fetch("/api/v1/admin/products", { credentials: "same-origin" }),
-        fetch("/api/v1/admin/orders", { credentials: "same-origin" }),
+        api.get("/v1/admin/products"),
+        api.get("/v1/admin/orders"),
       ]);
-      const productsPayload = await productsResponse.json();
-      const ordersPayload = await ordersResponse.json();
-      if (!productsResponse.ok || !productsPayload.success) throw new Error(productsPayload.message || "Admin access is required.");
-      if (!ordersResponse.ok || !ordersPayload.success) throw new Error(ordersPayload.message || "Could not load orders.");
+      const productsPayload = productsResponse.data;
+      const ordersPayload = ordersResponse.data;
+      if (!productsPayload.success) throw new Error(productsPayload.message || "Admin access is required.");
+      if (!ordersPayload.success) throw new Error(ordersPayload.message || "Could not load orders.");
       setProducts(productsPayload.data.products || []);
       setOrders(ordersPayload.data.orders || []);
       setStockDrafts(Object.fromEntries((productsPayload.data.products || []).map((product) => [product._id, String(product.stock)])));
@@ -45,14 +46,11 @@ export default function AdminPage() {
     setError("");
     setNotice("");
     try {
-      const response = await fetch(`/api/v1/admin/products/${product._id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ stock: Number(stockDrafts[product._id]) }),
+      const response = await api.patch(`/v1/admin/products/${product._id}`, {
+        stock: Number(stockDrafts[product._id]),
       });
-      const payload = await response.json();
-      if (!response.ok || !payload.success) throw new Error(payload.message || "Could not update stock.");
+      const payload = response.data;
+      if (!payload.success) throw new Error(payload.message || "Could not update stock.");
       setProducts((current) => current.map((item) => item._id === product._id ? payload.data.product : item));
       setNotice(`Stock updated for ${product.name}.`);
     } catch (err) {
@@ -67,14 +65,9 @@ export default function AdminPage() {
     setError("");
     setNotice("");
     try {
-      const response = await fetch(`/api/v1/admin/orders/${encodeURIComponent(order.orderNumber)}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ status }),
-      });
-      const payload = await response.json();
-      if (!response.ok || !payload.success) throw new Error(payload.message || "Could not update order.");
+      const response = await api.patch(`/v1/admin/orders/${encodeURIComponent(order.orderNumber)}/status`, { status });
+      const payload = response.data;
+      if (!payload.success) throw new Error(payload.message || "Could not update order.");
       setOrders((current) => current.map((item) => item.orderNumber === order.orderNumber ? payload.data.order : item));
       setNotice(`Order ${order.orderNumber} updated.`);
     } catch (err) {

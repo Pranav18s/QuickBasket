@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import api from "../lib/api";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
@@ -123,10 +124,9 @@ export default function StorefrontHome() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/v1/products?limit=50")
-      .then(async (response) => {
-        if (!response.ok) return null;
-        const payload = await response.json();
+    api.get("/v1/products?limit=50")
+      .then((response) => {
+        const payload = response.data;
         const products = payload?.data?.products;
         return Array.isArray(products) && products.length > 0
           ? products.map((product) => ({
@@ -253,7 +253,7 @@ export default function StorefrontHome() {
                   <span className="hidden sm:inline">View profile</span>
                 </Link>
                 <button type="button" onClick={async () => {
-                  try { await fetch("/api/v1/auth/logout", { method: "POST", credentials: "same-origin" }); } finally { dispatch(clearUser()); setNotice("You have been signed out"); window.setTimeout(() => setNotice(""), 2400); }
+                  try { await api.post("/v1/auth/logout"); } finally { dispatch(clearUser()); setNotice("You have been signed out"); window.setTimeout(() => setNotice(""), 2400); }
                 }} className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 px-3 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">
                   <LogOut size={16} /><span className="hidden sm:inline">Sign out</span>
                 </button>

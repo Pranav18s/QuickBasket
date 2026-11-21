@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
+import api from '../lib/api';
 import { Provider } from 'react-redux';
 import { makeStore } from './index';
 import { addItem } from './cartSlice';
@@ -34,10 +35,9 @@ export default function StoreProvider({ children }) {
     }
 
     // The server, not localStorage or Redux, is the authority for identity.
-    fetch('/api/v1/auth/me', { credentials: 'same-origin' })
-      .then(async (response) => {
-        if (!response.ok) throw new Error('No active session');
-        const payload = await response.json();
+    api.get('/v1/auth/me')
+      .then((response) => {
+        const payload = response.data;
         if (!payload.success || !payload.data?.user) throw new Error('Invalid session response');
         store.dispatch(setUser(payload.data.user));
       })

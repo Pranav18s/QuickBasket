@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import api from "../../lib/api";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
@@ -16,10 +17,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     let active = true;
-    fetch("/api/v1/auth/me", { credentials: "same-origin" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Please sign in to view your profile.");
-        const payload = await response.json();
+    api.get("/v1/auth/me")
+      .then((response) => {
+        const payload = response.data;
         if (!payload.success || !payload.data?.user) throw new Error("Your session could not be verified.");
         if (active) dispatch(setUser(payload.data.user));
       })
@@ -38,7 +38,7 @@ export default function ProfilePage() {
   const handleSignOut = async () => {
     setSigningOut(true);
     try {
-      await fetch("/api/v1/auth/logout", { method: "POST", credentials: "same-origin" });
+      await api.post("/v1/auth/logout");
     } finally {
       dispatch(clearUser());
       router.replace("/");
