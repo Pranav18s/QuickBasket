@@ -121,6 +121,7 @@ export default function StorefrontHome() {
   const [category, setCategory] = useState("all");
   const [sortBy, setSortBy] = useState("featured");
   const [notice, setNotice] = useState("");
+
   useEffect(() => {
     let cancelled = false;
     api.get("/v1/products?limit=50")

@@ -70,7 +70,7 @@ export default function ProductDetailsClient({ product, relatedProducts = [] }) 
             <Link href="/wishlist" className="rounded-xl border border-stone-200 px-3 py-2.5 text-sm font-semibold text-stone-700 hover:bg-rose-50 hover:text-rose-600">
               Wishlist ({wishlistItems.length})
             </Link>
-            <Link href="/cart" className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-3.5 py-3 text-sm font-bold text-white hover:bg-emerald-800">
+            <Link href="/cart" aria-label={`Open basket with ${cartCount} items`} className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-3.5 py-3 text-sm font-bold text-white hover:bg-emerald-800">
               <ShoppingBasket size={17} /> Basket ({cartCount})
             </Link>
           </div>

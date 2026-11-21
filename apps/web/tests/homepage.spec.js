@@ -66,10 +66,11 @@ test.describe('QuickBasket storefront and basket', () => {
 
     await expect(addToBasketButton).toBeVisible();
     await addToBasketButton.click();
+    await expect(page.getByRole('status')).toContainText(/added to your basket/i);
 
-    // Confirm the product was added before opening the basket.
+    // Match the accessible basket label used by the storefront header.
     const basketLink = page.getByRole('link', {
-      name: /^Basket \(1\)$/,
+      name: /Open basket with 1 items/i,
     });
     await expect(basketLink).toBeVisible();
 
